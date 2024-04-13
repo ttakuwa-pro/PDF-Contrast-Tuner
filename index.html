@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>PDF Viewer with Contrast Control</title>
+    <title>PDF濃度調整ツール</title>
     <style>
         body {
             text-align: center;
@@ -22,8 +22,11 @@
             overflow-y: auto;
         }
         canvas {
-            border: 1px solid black;
-            margin-top: 10px;
+            width: 100%;  /* ビューポートに合わせて幅を調整 */
+            height: auto; /* 高さは自動的に調整 */
+            max-width: 100%; /* 最大幅を100%に設定して、オーバーフローを防ぐ */
+            border: 1px solid black; /* 枠線でキャンバスを明確に表示 */
+            box-sizing: border-box; /* ボックスサイズ計算の方式を指定 */
         }
     </style>
     <script src="jsPDF/dist/jspdf.umd.min.js"></script>
@@ -39,4 +42,5 @@
     <div id="canvas-container"></div>
     <script type="module" src="app.js"></script>
 </body>
+
 </html>

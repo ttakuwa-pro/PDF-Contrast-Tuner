@@ -36,7 +36,8 @@ document.getElementById('file-input').addEventListener('change', function(e) {
 });
 
 function renderPage(page, index) {
-    var viewport = page.getViewport({scale: 1.5});
+    var scale = 7; // 解像度を高めるためのスケールファクター
+    var viewport = page.getViewport({ scale: scale });
     var canvas = document.createElement('canvas');
     canvas.height = viewport.height;
     canvas.width = viewport.width;
@@ -44,7 +45,12 @@ function renderPage(page, index) {
 
     return page.render({canvasContext: context, viewport: viewport}).promise.then(function() {
         document.getElementById('canvas-container').appendChild(canvas);
-        imageDataArray[index] = {original: context.getImageData(0, 0, canvas.width, canvas.height), current: null};
+        imageDataArray[index] = {
+            original: context.getImageData(0, 0, canvas.width, canvas.height),
+            current: null,
+            width: viewport.width,
+            height: viewport.height
+        };
     });
 }
 
@@ -79,8 +85,13 @@ function adjustContrast(change) {
     });
 }
 
-document.getElementById('increase-contrast').addEventListener('click', () => adjustContrast(-10));
-document.getElementById('decrease-contrast').addEventListener('click', () => adjustContrast(10));
+document.getElementById('increase-contrast').addEventListener('click', () => {
+    adjustContrast(-10);
+});
+
+document.getElementById('decrease-contrast').addEventListener('click', () => {
+    adjustContrast(10);
+});
 
 document.getElementById('reset-contrast').addEventListener('click', () => {
     imageDataArray.forEach((data, index) => {
@@ -106,15 +117,25 @@ function formatDate() {
 
 document.getElementById('download-pdf').addEventListener('click', function() {
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
+    let pdf;
 
     document.querySelectorAll('canvas').forEach((canvas, index) => {
-        if (index !== 0) pdf.addPage();
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
+        let imgData = canvas.toDataURL('image/jpeg', 1.0);  // JPEGの代わりにPNGを使用してもよい
+        let canvasWidth = imageDataArray[index].width;
+        let canvasHeight = imageDataArray[index].height;
+        let orientation = (canvasWidth > canvasHeight) ? 'l' : 'p';
+        let unit = 'mm', scale = 0.264583333; // 1 pixel = 0.264583333 mm
+        let format = [canvasWidth * scale, canvasHeight * scale];
+
+        if (index === 0) {
+            pdf = new jsPDF(orientation, unit, format);
+        } else {
+            pdf.addPage(format, orientation);
+        }
+        
+        pdf.addImage(imgData, 'JPEG', 0, 0, format[0], format[1], undefined, 'SLOW');
     });
 
-    let dateTime = formatDate();  // 現在の日時を取得
-    pdf.save(`${currentFileName}_${dateTime}.pdf`);  // 日時をファイル名に含めて保存
+    let dateTime = formatDate();
+    pdf.save(`${currentFileName}_${dateTime}.pdf`);
 });
-
