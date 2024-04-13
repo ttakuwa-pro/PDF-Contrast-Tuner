@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Viewer with Contrast Control</title>
+    <style>
+        body {
+            text-align: center;
+            margin: 0;
+            padding-top: 20px;
+        }
+        #file-input, #controls {
+            margin-bottom: 20px;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #eee;
+            overflow-y: auto;
+        }
+        canvas {
+            border: 1px solid black;
+            margin-top: 10px;
+        }
+    </style>
+    <script src="jsPDF/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <input type="file" id="file-input" accept="application/pdf">
+    <div id="controls">
+        <button id="increase-contrast">濃く</button>
+        <button id="decrease-contrast">薄く</button>
+        <button id="reset-contrast">リセット</button>
+        <button id="download-pdf">ダウンロード</button>
+    </div>
+    <div id="canvas-container"></div>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
