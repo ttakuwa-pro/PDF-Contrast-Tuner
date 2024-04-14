@@ -46,7 +46,7 @@ function setButtonsEnabled(enabled) {
 }
 
 function renderPage(page, index) {
-    var scale = 7; // 解像度を高めるためのスケールファクター
+    var scale = 3; // 解像度を高めるためのスケールファクター
     var viewport = page.getViewport({ scale: scale });
     var canvas = document.createElement('canvas');
     canvas.height = viewport.height;
@@ -154,7 +154,7 @@ function downloadPDF() {
         let canvasWidth = imageDataArray[index].width;
         let canvasHeight = imageDataArray[index].height;
         let orientation = (canvasWidth > canvasHeight) ? 'l' : 'p';
-        let unit = 'mm', scale = 0.264583333;
+        let unit = 'mm', scale = 0.2;
         let format = [canvasWidth * scale, canvasHeight * scale];
 
         if (index === 0) {
