@@ -7,13 +7,14 @@ var currentFileName = ''; // ファイル名を格納する変数
 
 document.getElementById('file-input').addEventListener('change', function(e) {
     var file = e.target.files[0];
-    if (!file.type.match('application/pdf')) {
-        console.error(file.name + " is not a PDF file.");
+    if (!file || !file.type.match('application/pdf')) {
+        console.error("Invalid file type or no file selected.");
+        // ファイルがPDFではない場合、またはファイルが選択されていない場合はボタンを無効化
+        setButtonsEnabled(false);
         return;
     }
 
     currentFileName = file.name.replace(/\.[^/.]+$/, ""); // 拡張子を除いたファイル名を保存
-
     document.getElementById('canvas-container').innerHTML = '';
     imageDataArray = [];
 
@@ -29,11 +30,20 @@ document.getElementById('file-input').addEventListener('change', function(e) {
 
             Promise.all(promises).then(() => {
                 console.log("All pages rendered.");
+                // PDFのレンダリングが完了した後でボタンを有効化
+                setButtonsEnabled(true);
             });
         });
     };
     fileReader.readAsArrayBuffer(file);
 });
+
+function setButtonsEnabled(enabled) {
+    document.getElementById('increase-contrast').disabled = !enabled;
+    document.getElementById('decrease-contrast').disabled = !enabled;
+    document.getElementById('reset-contrast').disabled = !enabled;
+    document.getElementById('download-pdf').disabled = !enabled;
+}
 
 function renderPage(page, index) {
     var scale = 7; // 解像度を高めるためのスケールファクター
@@ -86,22 +96,34 @@ function adjustContrast(change) {
 }
 
 document.getElementById('increase-contrast').addEventListener('click', () => {
-    adjustContrast(-10);
+    showLoading();
+    setTimeout(() => {
+        adjustContrast(-10);
+        hideLoading();
+    }, 100); // 100ミリ秒後にコントラスト調整とローディング非表示を行う
 });
 
 document.getElementById('decrease-contrast').addEventListener('click', () => {
-    adjustContrast(10);
+    showLoading();
+    setTimeout(() => {
+        adjustContrast(30);
+        hideLoading();
+    }, 100); // 100ミリ秒後にコントラスト調整とローディング非表示を行う
 });
 
 document.getElementById('reset-contrast').addEventListener('click', () => {
-    imageDataArray.forEach((data, index) => {
-        if (!data) return;  // 追加したチェック
-        var canvas = document.getElementsByTagName('canvas')[index];
-        if (!canvas) return; // 追加したチェック
-        var context = canvas.getContext('2d');
-        context.putImageData(data.original, 0, 0);
-        data.current = null;
-    });
+    showLoading();
+    setTimeout(() => {
+        imageDataArray.forEach((data, index) => {
+            if (!data) return;
+            var canvas = document.getElementsByTagName('canvas')[index];
+            if (!canvas) return;
+            var context = canvas.getContext('2d');
+            context.putImageData(data.original, 0, 0);
+            data.current = null;
+        });
+        hideLoading();
+    }, 100); // 100ミリ秒後にリセット処理とローディング非表示を行う
 });
 
 function formatDate() {
@@ -115,16 +137,24 @@ function formatDate() {
     return `${year}${month}${day}${hour}${minute}`;
 }
 
-document.getElementById('download-pdf').addEventListener('click', function() {
+document.getElementById('download-pdf').addEventListener('click', () => {
+    showLoading();
+    setTimeout(() => {
+        downloadPDF();
+        hideLoading();
+    }, 100); // 100ミリ秒後にPDFダウンロード処理とローディング非表示を行う
+});
+
+function downloadPDF() {
     const { jsPDF } = window.jspdf;
     let pdf;
 
     document.querySelectorAll('canvas').forEach((canvas, index) => {
-        let imgData = canvas.toDataURL('image/jpeg', 1.0);  // JPEGの代わりにPNGを使用してもよい
+        let imgData = canvas.toDataURL('image/jpeg', 1.0);
         let canvasWidth = imageDataArray[index].width;
         let canvasHeight = imageDataArray[index].height;
         let orientation = (canvasWidth > canvasHeight) ? 'l' : 'p';
-        let unit = 'mm', scale = 0.264583333; // 1 pixel = 0.264583333 mm
+        let unit = 'mm', scale = 0.264583333;
         let format = [canvasWidth * scale, canvasHeight * scale];
 
         if (index === 0) {
@@ -138,4 +168,13 @@ document.getElementById('download-pdf').addEventListener('click', function() {
 
     let dateTime = formatDate();
     pdf.save(`${currentFileName}_${dateTime}.pdf`);
-});
+}
+
+function showLoading() {
+    console.log('show loading');
+    document.getElementById('overlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('overlay').style.display = 'none';
+}
